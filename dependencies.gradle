@@ -1,25 +1,49 @@
 ext.versions = [
-    minSdk             : 14,
-    compileSdk         : 28,
-    buildTools         : '28.0.3',
-    publishVersion     : '2.3.0',
-    publishVersionCode : 19,
+    min_sdk: 14,
+    compile_sdk: 33,
+    publish_version: "3.0.2",
+    publish_version_code: 26
+]
 
-    gradlePlugin       : '3.4.0',
-    spotlessPlugin     : '3.22.0',
-    versionPlugin      : '0.21.0',
-    kotlin             : '1.3.31',
-    bintrayPlugin      : '0.9.1',
+ext.deps = [
+    gradle_plugins: [
+        android: "com.android.tools.build:gradle:7.3.1",
+        dependency_analysis: "com.autonomousapps:dependency-analysis-gradle-plugin:1.18.0",
+        dokka: "org.jetbrains.dokka:dokka-gradle-plugin:1.7.20",
+        spotless: "com.diffplug.spotless:spotless-plugin-gradle:6.12.0",
+        versions: "com.github.ben-manes:gradle-versions-plugin:0.44.0",
+        kotlin: "org.jetbrains.kotlin:kotlin-gradle-plugin:1.7.22",
+        nexus_publish: "io.github.gradle-nexus:publish-plugin:1.1.0"
+    ],
 
-    timber             : '4.7.1',
+    androidx: [
+        annotations: "androidx.annotation:annotation:1.5.0",
+        app_compat: "androidx.appcompat:appcompat:1.5.1",
+        core: "androidx.core:core-ktx:1.9.0",
+        ktx: [
+            fragment: "androidx.fragment:fragment-ktx:1.5.5",
+            lifecycle: "androidx.lifecycle:lifecycle-runtime-ktx:2.5.1",
+        ],
+        material: "com.google.android.material:material:1.7.0"
+    ],
 
-    junit              : '4.12',
-    mockito            : '2.27.0',
-    mockitoKotlin      : '2.1.0',
-    truth              : '0.44',
+    kotlin: [
+        stdlib8: "org.jetbrains.kotlin:kotlin-stdlib-jdk8",
+        coroutines: [
+            core: "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4",
+            android: "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.2",
+            flow_binding: "io.github.reactivecircus.flowbinding:flowbinding-android:1.2.0"
+        ],
+        test: [
+            mockito: "com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0"
+        ]
+    ],
 
-    androidxAnnotations: '1.0.2',
-    androidxCore       : '1.0.2',
-    androidxMaterial   : '1.0.0',
-    robolectric        : '4.2.1',
+    test: [
+        junit: "junit:junit:4.13.2",
+        robolectric: "org.robolectric:robolectric:4.9.1",
+        mockito_core: "org.mockito:mockito-core:4.10.0",
+        mockito_inline: "org.mockito:mockito-inline:4.10.0",
+        truth: "com.google.truth:truth:1.1.3",
+    ]
 ]

@@ -4,8 +4,7 @@ Assent is designed to make Android's runtime permissions easier and take less co
 
 <img src="https://raw.githubusercontent.com/afollestad/assent/master/showcase2.png" width="750" />
 
-[ ![jCenter](https://api.bintray.com/packages/drummer-aidan/maven/assent/images/download.svg) ](https://bintray.com/drummer-aidan/maven/assent/_latestVersion)
-[![Build Status](https://travis-ci.org/afollestad/assent.svg)](https://travis-ci.org/afollestad/assent)
+[![Android CI](https://github.com/afollestad/assent/workflows/Android%20CI/badge.svg)](https://github.com/afollestad/assent/actions?query=workflow%3A%22Android+CI%22)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/f1a2334c4c0349699760391bb71f763e)](https://www.codacy.com/app/drummeraidan_50/assent?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=afollestad/assent&amp;utm_campaign=Badge_Grade)
 [![License](https://img.shields.io/badge/license-Apache%202-4EB1BA.svg?style=flat-square)](https://www.apache.org/licenses/LICENSE-2.0.html)
 
@@ -14,25 +13,29 @@ Assent is designed to make Android's runtime permissions easier and take less co
 1. [Gradle Dependency](#gradle-dependency)
 2. [The Basics](#the-basics)
 3. [Using Results](#using-results)
-4. [Under the Hood Extras](#under-the-hood-extras)
-5. [Rationales](#rationales)
+4. [Permanently Denied](#permanently-denied)
+5. [Request Debouncing](#request-debouncing)
+6. [Rationales](#rationales)
+7. [Coroutines](#coroutines)
 
 ---
 
-## Gradle Dependency
+## Core
+
+[ ![Core](https://img.shields.io/maven-central/v/com.afollestad.assent/core?style=flat&label=Core) ](https://repo1.maven.org/maven2/com/afollestad/assent/core)
 
 Add this to your module's `build.gradle` file:
 
 ```gradle
 dependencies {
   
-  implementation 'com.afollestad:assent:2.3.0'
+  implementation 'com.afollestad.assent:core:3.0.2'
 }
 ```
 
 ---
 
-## The Basics
+### The Basics
 
 Runtime permissions on Android are completely reliant on the UI the user is in. Permission requests 
 go in and out of Activities and Fragments. This library provides its functionality as Kotlin 
@@ -71,7 +74,7 @@ both.**
 
 ---
 
-## Using Results
+### Using Results
 
 `AssentResult` is provided in request callbacks. It has a few useful fields and methods:
 
@@ -79,7 +82,7 @@ both.**
 val result: AssentResult = // ...
 
 val permissions: List<Permission> = result.permissions
-val grantResults: IntArray = result.grantResults
+val grantResults: List<GrantResult> = result.grantResults
 
 // Takes a single permission and returns if this result contains it in its set
 val containsPermission: Boolean = result.containsPermission(WRITE_EXTERNAL_STORAGE)
@@ -89,11 +92,38 @@ val permissionGranted: Boolean = result.isAllGranted(WRITE_EXTERNAL_STORAGE)
 
 // You can pass multiple permissions as varargs
 val permissionDenied: Boolean = result.isAllDenied(WRITE_EXTERNAL_STORAGE)
+
+// Returns GRANTED, DENIED, or PERMANENTLY_DENIED
+val writeStorageGrantResult: GrantResult = result[WRITE_EXTERNAL_STORAGE]
+
+val granted: Set<Permission> = result.granted()
+
+val denied: Set<Permission> = result.denied()
+
+val permanentlyDenied: Set<Permission> = result.permanentlyDenied()
 ```
 
 ---
 
-## Under the Hood Extras
+### Permanently Denied
+
+Assent detects when the user of your app has permanently denied a permission. Once a permission
+is permanently denied, the Android system will no longer show the permission dialog for that
+permission. At this point, the only way to get them to grant the permission is to explain why you
+_really_ need the permission and then launch system app details page for your app.
+
+```kotlin
+val result: AssentResult = // ...
+
+if (result[WRITE_EXTERNAL_STORAGE] == PERMANENTLY_DENIED) {
+  // NOTE: You should show a dialog of some sort before doing this!
+  showSystemAppDetailsPage()
+}
+```
+
+---
+
+### Request Debouncing
 
 If you were to do this...
 
@@ -119,6 +149,19 @@ askForPermissions(CALL_PHONE) { _ -> }
 
 ## Rationales
 
+[ ![Rationales](https://img.shields.io/maven-central/v/com.afollestad.assent/rationales?style=flat&label=Rationales) ](https://repo1.maven.org/maven2/com/afollestad/assent/rationales)
+
+Add this to your module's `build.gradle` file:
+
+```gradle
+dependencies {
+
+      implementation 'com.afollestad.assent:rationales:3.0.2'
+}
+```
+
+---
+
 Google recommends showing rationales for permissions when it may not be obvious to the user why 
 you need them. 
 
@@ -140,5 +183,51 @@ askForPermissions(
     rationaleHandler = rationaleHandler
 ) { result ->
   // Use result
+}
+```
+
+---
+
+## Coroutines
+
+[ ![Coroutines](https://img.shields.io/maven-central/v/com.afollestad.assent/coroutines?style=flat&label=Coroutines) ](https://repo1.maven.org/maven2/com/afollestad/assent/coroutines)
+
+Add this to your module's `build.gradle` file:
+
+```gradle
+dependencies {
+
+  implementation 'com.afollestad.assent:coroutines:3.0.2'
+}
+```
+
+---
+
+Kotlin coroutines enable Assent to work without callbacks. If you do not know the basics of
+coroutines, you should research them first.
+
+First, `awaitPermissionsResult(...)` is the coroutines equivalent to `askForPermissions(...)`:
+
+```kotlin
+// The coroutine extensions work from within any `suspend` function/lambda.
+coroutineScope {
+   val result: AssentResult = awaitPermissionsResult(
+       READ_CONTACTS, WRITE_EXTERNAL_STORAGE, READ_SMS,
+       rationaleHandler = rationaleHandler
+   )
+   // Use the result...
+}
+```
+
+And second, `awaitPermissionsGranted(...)` is the coroutines equivalent to `runWithPermissions(...)`:
+
+```kotlin
+// The coroutine extensions work from within any `suspend` function/lambda.
+coroutineScope {
+   awaitPermissionsGranted(
+       READ_CONTACTS, WRITE_EXTERNAL_STORAGE, READ_SMS,
+       rationaleHandler = rationaleHandler
+   )
+   // All three permissions were granted...
 }
 ```
